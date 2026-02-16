@@ -287,7 +287,11 @@
         <div class="data-section">
           <div class="section-header">
             <span id="b2b-title">B2B Lab Data</span>
+            <button class="btn btn-toggle" onclick="toggleComparison1()">
+              Hide Toggle
+            </button>
           </div>
+          <div id="comparison-wrapper1">
           <table id="b2b-table">
             <thead>
               <tr>
@@ -305,6 +309,7 @@
               <tr class="total-row" id="b2b-total-row"></tr>
             </tfoot>
           </table>
+          </div>
         </div>
 
         <!-- Comparison Section -->
@@ -353,7 +358,7 @@
           <br>
           <li>Maximum Retail Price (MRP)</li>
           <br>
-          <li>Discounted (% OFF)</li>
+          <li>Discounted (%OFF)</li>
         </ol>
       </div>
     </div>
@@ -498,6 +503,11 @@
         document
           .getElementById("comparison-wrapper")
           .classList.toggle("hidden");
+      }
+      function toggleComparison1() {
+        document
+            .getElementById("comparison-wrapper1")
+            .classList.toggle("hidden");
       }
 
       function calculatePercentage(mrp, dsp) {
