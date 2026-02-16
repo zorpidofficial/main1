@@ -297,6 +297,7 @@
                 <th><b>BSP</b></th>
                 <th><b>DSP (T/L)</b></th>
                 <th><b>MRP</b></th>
+                <th><b>%OFF</b></th>
               </tr>
             </thead>
             <tbody id="b2b-body"></tbody>
@@ -505,7 +506,7 @@
         // Note: Standard percentage is ((MRP-DSP)/MRP)*100.
         // I will follow the user's specific text: (((MRP - DSP)/MRP)/100)
         // return (((mrp - dsp) / mrp)*100).toFixed(2);
-        return (((mrp - dsp) / mrp) * 100).toFixed(4);
+        return (((mrp - dsp) / mrp) * 100).toFixed(2);
       }
 
       function updateUI() {
@@ -565,6 +566,7 @@
             const bsp = data[`${lab} / BSP`] || 0;
             const dsp = data[dspKey] || 0;
             const mrp = data[`${lab} / MRP`] || 0;
+            const perc = calculatePercentage(mrp, dsp);
 
             totals.dip += dip;
             totals.msp += msp;
@@ -580,6 +582,7 @@
                     <td>${bsp}</td>
                     <td>${dsp}</td>
                     <td>${mrp}</td>
+                    <td>${perc}%</td>
                 </tr>
             `;
           })
@@ -592,6 +595,7 @@
             <td>${totals.bsp}</td>
             <td>${totals.dsp}</td>
             <td>${totals.mrp}</td>
+            <td>${calculatePercentage(totals.mrp, totals.dsp)}%</td>
         `;
 
         // Render Comparison Table
