@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Lab Pricing System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #313032;
+            --accent-color: #27ae60;
+            --bg-color: #808080;
+            --border-color: #000000;
+            --text-small: 12px;
+            --text-normal: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+            font-size: var(--text-normal);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
+
+        /* Controls Section */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-weight: bold; font-size: var(--text-small); color: #666; text-transform: uppercase; }
+        
+        input, select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: var(--text-normal);
+        }
+
+        /* Tags */
+        .selected-tests {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .test-tag {
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--text-small);
+        }
+
+        .test-tag a { color: #fff; text-decoration: underline; font-weight: bold; }
+        .remove-tag { cursor: pointer; font-weight: bold; }
+
+        /* Sections */
+        .data-section { margin-top: 30px; }
+        .section-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            background: #ffffff;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+            font-size: var(--text-small);
+        }
+
+        th { background: #f8f9fa; font-weight: 600; color: #444; }
+
+        tr.total-row { background: #fff9db; font-weight: bold; }
+
+        .hidden { display: none; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: var(--text-small);
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-color); color: white; }
+        .btn-toggle { background: #e9ecef; color: #495057; border: 1px solid var(--border-color); }
+        .btn-pdf { background: #27ae60; color: white; margin-left: auto; }
+        .btn:hover { opacity: 0.9; }
+
+        /* Search Results Dropdown */
+        .search-container { position: relative; }
+        #search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .search-item:hover { background: #f1f3f5; }
+
+        @media print {
+            .controls, .btn, .search-container, .remove-tag { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Lab Pricing Analytics</h1>
+        <button class="btn btn-pdf" onclick="generatePDF()">Download PDF Report</button>
+    </header>
+
+    <div class="controls">
+        <div class="control-group search-container">
+            <label>Search Tests</label>
+            <input type="text" id="test-search" placeholder="Type test name (e.g. CBC)..." oninput="handleSearch(this.value)">
+            <div id="search-results" class="hidden"></div>
+        </div>
+
+        <div class="control-group">
+            <label>B2B Lab</label>
+            <select id="b2b-lab-select" onchange="updateUI()">
+                <option value="Prognosis">Prognosis</option>
+                <option value="Healthians">Healthians</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Tier (B2B)</label>
+            <select id="tier-select" onchange="updateUI()">
+                <option value="6">Tier 6</option>
+                <option value="5">Tier 5</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Level (B2B)</label>
+            <select id="level-select" onchange="updateUI()">
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Comparison Lab</label>
+            <select id="comp-lab-select" onchange="updateUI()">
+                <option value="1MG">Tata 1MG</option>
+                <option value="Healthians">Healthians</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="selected-tests" id="tags-container">
+        <!-- Tags injected here -->
+    </div>
+
+    <div id="main-content" class="hidden">
+        <!-- B2B Section -->
+        <div class="data-section">
+            <div class="section-header">
+                <span id="b2b-title">B2B Lab Data</span>
+            </div>
+            <table id="b2b-table">
+                <thead>
+                    <tr>
+                        <th>Test Name</th>
+                        <th>DIP</th>
+                        <th>MSP</th>
+                        <th>BSP</th>
+                        <th>DSP (T/L)</th>
+                        <th>MRP</th>
+                    </tr>
+                </thead>
+                <tbody id="b2b-body"></tbody>
+                <tfoot>
+                    <tr class="total-row" id="b2b-total-row"></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Comparison Section -->
+        <div class="data-section">
+            <div class="section-header">
+                <span>Comparison Lab Data</span>
+                <button class="btn btn-toggle" onclick="toggleComparison()">Hide/Show Comparison</button>
+            </div>
+            <div id="comparison-wrapper">
+                <table id="comp-table">
+                    <thead>
+                        <tr>
+                            <th>Test Name</th>
+                            <th>Comp. DSP</th>
+                            <th>Comp. MRP</th>
+                            <th>Calculated %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comp-body"></tbody>
+                    <tfoot>
+                        <tr class="total-row" id="comp-total-row"></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hardcoded Data based on Main.json structure
+    const db = {
+      "CBC001": {
+        "Test Name": "Complete Blood Count (CBC)",
+        "Department": "Pathology",
+        "Category": "I",
+        "Test Link": "https://google.com",
+        "Prognosis / DIP": 60, "Prognosis / MSP": 168, "Prognosis / MRP": 350, "Prognosis / BSP": 312,
+        "Prognosis/DSP/6/3": 219, "Prognosis/DSP/6/2": 227, "Prognosis/DSP/6/1": 234,
+        "Prognosis/DSP/5/3": 241, "Prognosis/DSP/5/2": 249, "Prognosis/DSP/5/1": 256,
+        "Healthians / DIP": 110, "Healthians / MSP": 292, "Healthians / MRP": 600, "Healthians / BSP": 412,
+        "Healthians/DSP/6/3": 379, "Healthians/DSP/6/2": 391, "Healthians/DSP/6/1": 403,
+        "Healthians/DSP/5/3": 416, "Healthians/DSP/5/2": 428, "Healthians/DSP/5/1": 440,
+        "Comparison/1MG/DSP": 319, "Comparison/1MG/MRP": 350,
+        "Comparison/Healthians/DSP": 303, "Comparison/Healthians/MRP": 1010
+      },
+      "KFT001": {
+        "Test Name": "Kidney Function Test (KFT)",
+        "Department": "Pathology",
+        "Category": "IV",
+        "Test Link": "https://instagram.com",
+        "Prognosis / DIP": 100, "Prognosis / MSP": 359, "Prognosis / MRP": 800, "Prognosis / BSP": 567,
+        "Prognosis/DSP/6/3": 483, "Prognosis/DSP/6/2": 501, "Prognosis/DSP/6/1": 518,
+        "Prognosis/DSP/5/3": 536, "Prognosis/DSP/5/2": 554, "Prognosis/DSP/5/1": 571,
+        "Healthians / DIP": 110, "Healthians / MSP": 403, "Healthians / MRP": 900, "Healthians / BSP": 567,
+        "Healthians/DSP/6/3": 543, "Healthians/DSP/6/2": 563, "Healthians/DSP/6/1": 582,
+        "Healthians/DSP/5/3": 602, "Healthians/DSP/5/2": 622, "Healthians/DSP/5/1": 642,
+        "Comparison/1MG/DSP": 399, "Comparison/1MG/MRP": 850,
+        "Comparison/Healthians/DSP": 427, "Comparison/Healthians/MRP": 1423
+      },
+      "LFT001": {
+        "Test Name": "Liver Function Test (LFT)",
+        "Department": "Pathology",
+        "Category": "II",
+        "Test Link": "https://linkedin.com",
+        "Prognosis / DIP": 80, "Prognosis / MSP": 310, "Prognosis / MRP": 700, "Prognosis / BSP": 385,
+        "Prognosis/DSP/6/3": 420, "Prognosis/DSP/6/2": 435, "Prognosis/DSP/6/1": 451,
+        "Prognosis/DSP/5/3": 466, "Prognosis/DSP/5/2": 482, "Prognosis/DSP/5/1": 498,
+        "Healthians / DIP": 110, "Healthians / MSP": 310, "Healthians / MRP": 650, "Healthians / BSP": 485,
+        "Healthians/DSP/6/3": 406, "Healthians/DSP/6/2": 419, "Healthians/DSP/6/1": 433,
+        "Healthians/DSP/5/3": 446, "Healthians/DSP/5/2": 460, "Healthians/DSP/5/1": 474,
+        "Comparison/1MG/DSP": 399, "Comparison/1MG/MRP": 710,
+        "Comparison/Healthians/DSP": 379, "Comparison/Healthians/MRP": 1263
+      }
+    };
+
+    let selectedTestKeys = [];
+
+    function handleSearch(query) {
+        const resultsEl = document.getElementById('search-results');
+        if (!query) {
+            resultsEl.classList.add('hidden');
+            return;
+        }
+
+        const filtered = Object.keys(db).filter(key => 
+            db[key]["Test Name"].toLowerCase().includes(query.toLowerCase())
+        );
+
+        if (filtered.length > 0) {
+            resultsEl.innerHTML = filtered.map(key => `
+                <div class="search-item" onclick="addTest('${key}')">${db[key]["Test Name"]}</div>
+            `).join('');
+            resultsEl.classList.remove('hidden');
+        } else {
+            resultsEl.classList.add('hidden');
+        }
+    }
+
+    function addTest(key) {
+        if (!selectedTestKeys.includes(key)) {
+            selectedTestKeys.push(key);
+            updateUI();
+        }
+        document.getElementById('test-search').value = '';
+        document.getElementById('search-results').classList.add('hidden');
+    }
+
+    function removeTest(key) {
+        selectedTestKeys = selectedTestKeys.filter(k => k !== key);
+        updateUI();
+    }
+
+    function toggleComparison() {
+        document.getElementById('comparison-wrapper').classList.toggle('hidden');
+    }
+
+    function calculatePercentage(mrp, dsp) {
+        if (!mrp || mrp === 0) return 0;
+        // Formula provided: (((MRP - DSP)/MRP)/100)
+        // Note: Standard percentage is ((MRP-DSP)/MRP)*100. 
+        // I will follow the user's specific text: (((MRP - DSP)/MRP)/100)
+        return (((mrp - dsp) / mrp) / 100).toFixed(4);
+    }
+
+    function updateUI() {
+        const mainContent = document.getElementById('main-content');
+        const tagsContainer = document.getElementById('tags-container');
+        const b2bBody = document.getElementById('b2b-body');
+        const b2bTotalRow = document.getElementById('b2b-total-row');
+        const compBody = document.getElementById('comp-body');
+        const compTotalRow = document.getElementById('comp-total-row');
+
+        const lab = document.getElementById('b2b-lab-select').value;
+        const tier = document.getElementById('tier-select').value;
+        const level = document.getElementById('level-select').value;
+        const compLab = document.getElementById('comp-lab-select').value;
+
+        document.getElementById('b2b-title').innerText = `${lab} Analytics`;
+
+        if (selectedTestKeys.length === 0) {
+            mainContent.classList.add('hidden');
+            tagsContainer.innerHTML = '';
+            return;
+        }
+
+        mainContent.classList.remove('hidden');
+
+        // Render Tags
+        tagsContainer.innerHTML = selectedTestKeys.map(key => `
+            <div class="test-tag">
+                <a href="${db[key]["Test Link"]}" target="_blank">${db[key]["Test Name"]}</a>
+                <span class="remove-tag" onclick="removeTest('${key}')">&times;</span>
+            </div>
+        `).join('');
+
+        // Totals
+        let totals = { dip: 0, msp: 0, bsp: 0, dsp: 0, mrp: 0, c_dsp: 0, c_mrp: 0 };
+
+        // Render B2B Table
+        b2bBody.innerHTML = selectedTestKeys.map(key => {
+            const data = db[key];
+            const dspKey = `${lab}/DSP/${tier}/${level}`;
+            const dip = data[`${lab} / DIP`] || 0;
+            const msp = data[`${lab} / MSP`] || 0;
+            const bsp = data[`${lab} / BSP`] || 0;
+            const dsp = data[dspKey] || 0;
+            const mrp = data[`${lab} / MRP`] || 0;
+
+            totals.dip += dip;
+            totals.msp += msp;
+            totals.bsp += bsp;
+            totals.dsp += dsp;
+            totals.mrp += mrp;
+
+            return `
+                <tr>
+                    <td>${data["Test Name"]}</td>
+                    <td>${dip}</td>
+                    <td>${msp}</td>
+                    <td>${bsp}</td>
+                    <td>${dsp}</td>
+                    <td>${mrp}</td>
+                </tr>
+            `;
+        }).join('');
+
+        b2bTotalRow.innerHTML = `
+            <td>TOTALS</td>
+            <td>${totals.dip}</td>
+            <td>${totals.msp}</td>
+            <td>${totals.bsp}</td>
+            <td>${totals.dsp}</td>
+            <td>${totals.mrp}</td>
+        `;
+
+        // Render Comparison Table
+        compBody.innerHTML = selectedTestKeys.map(key => {
+            const data = db[key];
+            const c_dsp = data[`Comparison/${compLab}/DSP`] || 0;
+            const c_mrp = data[`Comparison/${compLab}/MRP`] || 0;
+            const perc = calculatePercentage(c_mrp, c_dsp);
+
+            totals.c_dsp += c_dsp;
+            totals.c_mrp += c_mrp;
+
+            return `
+                <tr>
+                    <td>${data["Test Name"]}</td>
+                    <td>${c_dsp}</td>
+                    <td>${c_mrp}</td>
+                    <td>${perc}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        compTotalRow.innerHTML = `
+            <td>TOTALS</td>
+            <td>${totals.c_dsp}</td>
+            <td>${totals.c_mrp}</td>
+            <td>${calculatePercentage(totals.c_mrp, totals.c_dsp)}%</td>
+        `;
+    }
+
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const lab = document.getElementById('b2b-lab-select').value;
+        const tier = document.getElementById('tier-select').value;
+        const level = document.getElementById('level-select').value;
+        const compLab = document.getElementById('comp-lab-select').value;
+
+        doc.setFontSize(16);
+        doc.text("Diagnostic Lab Pricing Report", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Configuration: B2B: ${lab} (T${tier}/L${level}) | Comparison: ${compLab}`, 14, 28);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
+
+        // B2B Table
+        doc.autoTable({
+            startY: 40,
+            head: [['Test Name', 'DIP', 'MSP', 'BSP', 'DSP', 'MRP']],
+            body: [
+                ...selectedTestKeys.map(key => {
+                    const d = db[key];
+                    return [
+                        d["Test Name"],
+                        d[`${lab} / DIP`],
+                        d[`${lab} / MSP`],
+                        d[`${lab} / BSP`],
+                        d[`${lab}/DSP/${tier}/${level}`],
+                        d[`${lab} / MRP`]
+                    ];
+                }),
+                // Footer Totals Row
+                ['TOTALS', 
+                 selectedTestKeys.reduce((a,k) => a + db[k][`${lab} / DIP`], 0),
+                 selectedTestKeys.reduce((a,k) => a + db[k][`${lab} / MSP`], 0),
+                 selectedTestKeys.reduce((a,k) => a + db[k][`${lab} / BSP`], 0),
+                 selectedTestKeys.reduce((a,k) => a + db[k][`${lab}/DSP/${tier}/${level}`], 0),
+                 selectedTestKeys.reduce((a,k) => a + db[k][`${lab} / MRP`], 0)
+                ]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [44, 62, 80] }
+        });
+
+        // Comparison Table
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 10,
+            head: [[`Comparison: ${compLab}`, 'DSP', 'MRP', '% (Formula Applied)']],
+            body: [
+                ...selectedTestKeys.map(key => {
+                    const d = db[key];
+                    const dsp = d[`Comparison/${compLab}/DSP`];
+                    const mrp = d[`Comparison/${compLab}/MRP`];
+                    return [
+                        d["Test Name"],
+                        dsp,
+                        mrp,
+                        calculatePercentage(mrp, dsp)
+                    ];
+                }),
+                ['TOTALS', 
+                 selectedTestKeys.reduce((a,k) => a + db[k][`Comparison/${compLab}/DSP`], 0),
+                 selectedTestKeys.reduce((a,k) => a + db[k][`Comparison/${compLab}/MRP`], 0),
+                 calculatePercentage(
+                    selectedTestKeys.reduce((a,k) => a + db[k][`Comparison/${compLab}/MRP`], 0),
+                    selectedTestKeys.reduce((a,k) => a + db[k][`Comparison/${compLab}/DSP`], 0)
+                 )
+                ]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [52, 152, 219] }
+        });
+
+        doc.save(`Pricing_Report_${Date.now()}.pdf`);
+    }
+
+    // Initialize with nothing shown
+    updateUI();
+</script>
+
+</body>
+</html>
