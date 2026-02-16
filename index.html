@@ -371,20 +371,20 @@
           Department: "Pathology",
           Category: "I",
           "Test Link": "https://google.com",
-          "Prognosis / DIP": 60,
-          "Prognosis / MSP": 168,
-          "Prognosis / MRP": 350,
-          "Prognosis / BSP": 312,
+          "Prognosis/DIP": 60,
+          "Prognosis/MSP": 168,
+          "Prognosis/MRP": 350,
+          "Prognosis/BSP": 312,
           "Prognosis/DSP/6/3": 219,
           "Prognosis/DSP/6/2": 227,
           "Prognosis/DSP/6/1": 234,
           "Prognosis/DSP/5/3": 241,
           "Prognosis/DSP/5/2": 249,
           "Prognosis/DSP/5/1": 256,
-          "Healthians / DIP": 110,
-          "Healthians / MSP": 292,
-          "Healthians / MRP": 600,
-          "Healthians / BSP": 412,
+          "Healthians/DIP": 110,
+          "Healthians/MSP": 292,
+          "Healthians/MRP": 600,
+          "Healthians/BSP": 412,
           "Healthians/DSP/6/3": 379,
           "Healthians/DSP/6/2": 391,
           "Healthians/DSP/6/1": 403,
@@ -401,20 +401,20 @@
           Department: "Pathology",
           Category: "IV",
           "Test Link": "https://instagram.com",
-          "Prognosis / DIP": 100,
-          "Prognosis / MSP": 359,
-          "Prognosis / MRP": 800,
-          "Prognosis / BSP": 567,
+          "Prognosis/DIP": 100,
+          "Prognosis/MSP": 359,
+          "Prognosis/MRP": 800,
+          "Prognosis/BSP": 567,
           "Prognosis/DSP/6/3": 483,
           "Prognosis/DSP/6/2": 501,
           "Prognosis/DSP/6/1": 518,
           "Prognosis/DSP/5/3": 536,
           "Prognosis/DSP/5/2": 554,
           "Prognosis/DSP/5/1": 571,
-          "Healthians / DIP": 110,
-          "Healthians / MSP": 403,
-          "Healthians / MRP": 900,
-          "Healthians / BSP": 567,
+          "Healthians/DIP": 110,
+          "Healthians/MSP": 403,
+          "Healthians/MRP": 900,
+          "Healthians/BSP": 567,
           "Healthians/DSP/6/3": 543,
           "Healthians/DSP/6/2": 563,
           "Healthians/DSP/6/1": 582,
@@ -431,20 +431,20 @@
           Department: "Pathology",
           Category: "II",
           "Test Link": "https://linkedin.com",
-          "Prognosis / DIP": 80,
-          "Prognosis / MSP": 310,
-          "Prognosis / MRP": 700,
-          "Prognosis / BSP": 385,
+          "Prognosis/DIP": 80,
+          "Prognosis/MSP": 310,
+          "Prognosis/MRP": 700,
+          "Prognosis/BSP": 385,
           "Prognosis/DSP/6/3": 420,
           "Prognosis/DSP/6/2": 435,
           "Prognosis/DSP/6/1": 451,
           "Prognosis/DSP/5/3": 466,
           "Prognosis/DSP/5/2": 482,
           "Prognosis/DSP/5/1": 498,
-          "Healthians / DIP": 110,
-          "Healthians / MSP": 310,
-          "Healthians / MRP": 650,
-          "Healthians / BSP": 485,
+          "Healthians/DIP": 110,
+          "Healthians/MSP": 310,
+          "Healthians/MRP": 650,
+          "Healthians/BSP": 485,
           "Healthians/DSP/6/3": 406,
           "Healthians/DSP/6/2": 419,
           "Healthians/DSP/6/1": 433,
@@ -571,11 +571,11 @@
           .map((key) => {
             const data = db[key];
             const dspKey = `${lab}/DSP/${tier}/${level}`;
-            const dip = data[`${lab} / DIP`] || 0;
-            const msp = data[`${lab} / MSP`] || 0;
-            const bsp = data[`${lab} / BSP`] || 0;
+            const dip = data[`${lab}/DIP`] || 0;
+            const msp = data[`${lab}/MSP`] || 0;
+            const bsp = data[`${lab}/BSP`] || 0;
             const dsp = data[dspKey] || 0;
-            const mrp = data[`${lab} / MRP`] || 0;
+            const mrp = data[`${lab}/MRP`] || 0;
             const perc = calculatePercentage(mrp, dsp);
 
             totals.dip += dip;
@@ -648,42 +648,64 @@
         const compLab = document.getElementById("comp-lab-select").value;
 
         doc.setFontSize(16);
-        doc.text("Diagnostic Lab Pricing Report", 14, 20);
-        doc.setFontSize(10);
-        doc.text(
-          `Configuration: B2B: ${lab} (T${tier}/L${level}) | Comparison: ${compLab}`,
-          14,
-          28,
+        doc.text("Diagnostics Lab Pricing Report", 14, 20);
+        doc.setFontSize(10); 
+        doc.text( 
+            `Diagnostics Partner: ${lab} (Tier_${tier}/Level_${level})`,
+            14,
+            28,
         );
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
+        doc.text(
+          `Comparison Lab: ${compLab}`,
+          14,
+          34,
+        );
+        // doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
+        doc.text(`Generated on: ${new Date().toISOString()}`, 14, 40);
+
 
         // B2B Table
         doc.autoTable({
-          startY: 40,
-          head: [["Test Name", "DIP", "MSP", "BSP", "DSP", "MRP"]],
+          startY: 46,
+          head: [["Test Name", "DIP", "MSP", "BSP", "DSP", "MRP", "%OFF"]],
           body: [
             ...selectedTestKeys.map((key) => {
               const d = db[key];
-              return [
-                d["Test Name"],
-                d[`${lab} / DIP`],
-                d[`${lab} / MSP`],
-                d[`${lab} / BSP`],
-                d[`${lab}/DSP/${tier}/${level}`],
-                d[`${lab} / MRP`],
-              ];
+              const dip = d[`${lab}/DIP`];
+              const msp = d[`${lab}/MSP`];
+              const bsp = d[`${lab}/BSP`];
+              const dsp = d[`${lab}/DSP/${tier}/${level}`];
+              const mrp = d[`${lab}/MRP`];
+
+              return [d["Test Name"], dip, msp, bsp, dsp, mrp, calculatePercentage(mrp, dsp)];
+            //   return [
+            //     d["Test Name"],
+            //     d[`${lab}/DIP`],
+            //     d[`${lab}/MSP`],
+            //     d[`${lab}/BSP`],
+            //     d[`${lab}/DSP/${tier}/${level}`],
+            //     d[`${lab}/MRP`],
+            //     calculatePercentage(mrp, dsp)
+            //   ];
             }),
             // Footer Totals Row
             [
               "TOTALS",
-              selectedTestKeys.reduce((a, k) => a + db[k][`${lab} / DIP`], 0),
-              selectedTestKeys.reduce((a, k) => a + db[k][`${lab} / MSP`], 0),
-              selectedTestKeys.reduce((a, k) => a + db[k][`${lab} / BSP`], 0),
-              selectedTestKeys.reduce(
-                (a, k) => a + db[k][`${lab}/DSP/${tier}/${level}`],
-                0,
+              selectedTestKeys.reduce((a, k) => a + db[k][`${lab}/DIP`], 0),
+              selectedTestKeys.reduce((a, k) => a + db[k][`${lab}/MSP`], 0),
+              selectedTestKeys.reduce((a, k) => a + db[k][`${lab}/BSP`], 0),
+              selectedTestKeys.reduce((a, k) => a + db[k][`${lab}/DSP/${tier}/${level}`], 0,),
+              selectedTestKeys.reduce((a, k) => a + db[k][`${lab}/MRP`], 0),
+              calculatePercentage(
+                selectedTestKeys.reduce(
+                  (a, k) => a + db[k][`${lab}/MRP`],
+                  0,
+                ),
+                selectedTestKeys.reduce(
+                  (a, k) => a + db[k][`${lab}/DSP/${tier}/${level}`],
+                  0,
+                ),
               ),
-              selectedTestKeys.reduce((a, k) => a + db[k][`${lab} / MRP`], 0),
             ],
           ],
           theme: "striped",
@@ -725,11 +747,14 @@
               ),
             ],
           ],
-          theme: "grid",
-          headStyles: { fillColor: [52, 152, 219] },
+          theme: "striped",
+          headStyles: { fillColor: [44, 62, 80] },
+
+        //   theme: "grid",
+        //   headStyles: { fillColor: [52, 152, 219] },
         });
 
-        doc.save(`Pricing_Report_${Date.now()}.pdf`);
+        doc.save(`Zorpid_Pricing_Report_${Date.now()}.pdf`);
       }
 
       // Initialize with nothing shown
