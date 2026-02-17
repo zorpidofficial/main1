@@ -223,7 +223,7 @@
         <!-- <h1>Zorpid Pricing Analytics</h1> -->
          <h1>Zorpid Pricing Analytics</h1>
         <button class="btn btn-pdf" onclick="generatePDF()">
-          Download PDF Report
+          Download the PDF Report
         </button>
       </header>
 
@@ -360,6 +360,9 @@
           <br>
           <li>Discounted (%OFF)</li>
         </ol>
+        <p>
+        <code><strong>%OFF = ((1 - (DSP/MRP))*100)</strong></code>
+        </p>
       </div>
     </div>
 
@@ -370,7 +373,6 @@
           "Test Name": "Complete Blood Count (CBC)",
           Department: "Pathology",
           Category: "I",
-          "Test Link": "https://google.com",
           "Prognosis/DIP": 60,
           "Prognosis/MSP": 168,
           "Prognosis/MRP": 350,
@@ -393,14 +395,16 @@
           "Healthians/DSP/5/1": 440,
           "Comparison/1MG/DSP": 319,
           "Comparison/1MG/MRP": 350,
+          "Comparison/1MG/Test Link": "https://www.1mg.com/labs/test/1717",
           "Comparison/Healthians/DSP": 303,
           "Comparison/Healthians/MRP": 1010,
+          "Comparison/Healthians/Test Link": "https://www.healthians.com/profile/delhi/complete-blood-count",
         },
         KFT001: {
           "Test Name": "Kidney Function Test (KFT)",
           Department: "Pathology",
           Category: "IV",
-          "Test Link": "https://instagram.com",
+          "Test-Link": "https://instagram.com",
           "Prognosis/DIP": 100,
           "Prognosis/MSP": 359,
           "Prognosis/MRP": 800,
@@ -423,8 +427,10 @@
           "Healthians/DSP/5/1": 642,
           "Comparison/1MG/DSP": 399,
           "Comparison/1MG/MRP": 850,
+          "Comparison/1MG/Test Link": "https://www.1mg.com/labs/test/32826",
           "Comparison/Healthians/DSP": 427,
           "Comparison/Healthians/MRP": 1423,
+          "Comparison/Healthians/Test Link": "https://www.healthians.com/profile/delhi/kidney-function-test"
         },
         LFT001: {
           "Test Name": "Liver Function Test (LFT)",
@@ -453,8 +459,10 @@
           "Healthians/DSP/5/1": 474,
           "Comparison/1MG/DSP": 399,
           "Comparison/1MG/MRP": 710,
+          "Comparison/1MG/Test Link": "https://www.1mg.com/labs/test/2562",
           "Comparison/Healthians/DSP": 379,
           "Comparison/Healthians/MRP": 1263,
+          "Comparison/Healthians/Test Link": "https://www.healthians.com/profile/delhi/liver-function-test",
         },
       };
 
@@ -614,6 +622,7 @@
             const data = db[key];
             const c_dsp = data[`Comparison/${compLab}/DSP`] || 0;
             const c_mrp = data[`Comparison/${compLab}/MRP`] || 0;
+            const c_test_link = data[`Comparison/${compLab}/Test Link`];
             const perc = calculatePercentage(c_mrp, c_dsp);
 
             totals.c_dsp += c_dsp;
@@ -621,7 +630,7 @@
 
             return `
                 <tr>
-                    <td>${data["Test Name"]}</td>
+                    <td><a href="${c_test_link}" target="_blank" style="">${db[key]["Test Name"]}</a></td>
                     <td>${c_dsp}</td>
                     <td>${c_mrp}</td>
                     <td>${perc}%</td>
